@@ -1,0 +1,43 @@
+version: 1
+send_anonymous_usage_stats: true
+project_id: "tap-postgres"
+default_environment: test
+environments:
+- name: test
+plugins:
+  extractors:
+  - name: "tap-postgres"
+    namespace: "tap_postgres"
+    pip_url: -e .
+    capabilities:
+    - state
+    - catalog
+    - discover
+    - about
+    - stream-maps
+    config:
+      host: "ec2-3-0-184-69.ap-southeast-1.compute.amazonaws.com"
+      port: 30003
+      database: "wmebservices"
+      user: "watermelon"
+      password: "watermelon123"
+        #      table_name: "public.test"
+      initial_start_time: 1726425000000 
+      endtimeU:  1726770600000
+      query: "select * from public.test"
+      timefield: "data_uploaded_time"
+      timefield_format: "YYYY-MM-DDTHH:mm:SS"
+
+
+  loaders:
+  - name: target-jsonl
+    variant: andyh1203
+    pip_url: target-jsonl
+  - name: kafka-loader
+    namespace: kafka_loader
+    pip_url: -e ./loader-kafka
+    executable: loader-kafka
+    config:
+      kafka_brokers: ec2-54-82-37-97.compute-1.amazonaws.com:9092
+      topic_prefix: 23seppostgres
+

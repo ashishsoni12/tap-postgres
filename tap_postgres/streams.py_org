@@ -1,0 +1,57 @@
+from typing import Any, Dict, Optional, Iterable
+from singer_sdk.streams import Stream
+from singer_sdk import typing as th  # JSON schema typing helpers
+import psycopg2
+
+class PostgresStream(Stream):
+    """Base stream class for tap-postgres."""
+
+    # Define the name of the stream
+    name = "postgres_stream"
+
+    # Define the schema of the stream
+    schema = th.PropertiesList(
+        th.Property("response_code", th.IntegerType),
+        th.Property("transaction_name", th.StringType),
+        th.Property("data_uploaded_time", th.DateTimeType)        
+    ).to_dict()
+
+    def __init__(self, tap, table_name: Optional[str] = None):
+        super().__init__(tap)
+        self.table_name = table_name or self.config.get("table_name")
+    
+    # A method to get records from the database
+    def get_records(self, context: Optional[Dict] = None) -> Iterable[Dict[str, Any]]:
+        """Return an iterator of record-type dictionary objects."""
+        query = f"SELECT * FROM {self.table_name}"
+        self.logger.info(f"Executing query: {query}")
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(query)
+                for row in cur.fetchall():
+                    yield self.post_process(row)
+
+    # A method to handle the connection to the database
+    def _connect(self):
+        conn = psycopg2.connect(
+            host=self.config.get("host"),
+            port=self.config.get("port"),
+            user=self.config.get("username"),
+            password=self.config.get("password"),
+            dbname=self.config.get("database")
+        )
+        return conn
+
+    # A method to post-process records before returning them
+    def post_process(self, record: Dict[str, Any]) -> Dict[str, Any]:
+        """Adjust records after they are retrieved, if necessary."""
+        return record
+
+    def get_starting_timestamp(self) -> Optional[str]:
+        """Retrieve the starting timestamp if needed."""
+        return self.config.get("start_date")
+
+    # A method to define any incremental key
+    def get_new_pkey(self, record: Dict) -> Any:
+        return record.get("id")
+

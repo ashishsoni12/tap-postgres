@@ -1,0 +1,58 @@
+from typing import Any, Dict, Optional, Iterable
+from singer_sdk.streams import Stream
+from singer_sdk import typing as th  # JSON schema typing helpers
+from sqlalchemy import create_engine,text
+from sqlalchemy.exc import SQLAlchemyError
+
+class PostgresStream(Stream):
+    """Base stream class for tap-postgres using SQLAlchemy."""
+
+    # Define the name of the stream
+    name = "postgres_stream"
+
+    # Define the schema of the stream
+    schema = th.PropertiesList(
+        th.Property("response_code", th.IntegerType),
+        th.Property("transaction_name", th.StringType),
+        th.Property("data_uploaded_time", th.DateTimeType)
+    ).to_dict()
+
+    def __init__(self, tap, table_name: Optional[str] = None):
+        super().__init__(tap)
+        self.table_name = table_name or self.config.get("table_name")
+        self.engine = self._create_engine()
+
+    def _create_engine(self):
+        """Create a SQLAlchemy engine for PostgreSQL."""
+        db_url = f"postgresql+psycopg2://{self.config.get('user')}:{self.config.get('password')}@" \
+                 f"{self.config.get('host')}:{self.config.get('port')}/{self.config.get('database')}"
+        try:
+            engine = create_engine(db_url)
+            # Test the connection
+            return engine
+        except SQLAlchemyError as e:
+            self.logger.error(f"Database connection error: {e}")
+            raise
+
+    def get_records(self, context: Optional[Dict] = None) -> Iterable[Dict[str, Any]]:
+        """Return an iterator of record-type dictionary objects."""
+        query = f"SELECT * FROM {self.table_name}"
+        self.logger.info(f"Executing query: {query}")
+
+        with self.engine.connect() as conn:
+            result = conn.execute(text(query))
+            columns = result.keys()
+            for row in result:
+                yield self.post_process(dict(zip(columns, row)))
+
+    def post_process(self, record: Dict[str, Any]) -> Dict[str, Any]:
+        """Adjust records after they are retrieved, if necessary."""
+        return record
+
+    def get_starting_timestamp(self) -> Optional[str]:
+        """Retrieve the starting timestamp if needed."""
+        return self.config.get("start_date")
+
+    def get_new_pkey(self, record: Dict) -> Any:
+        return record.get("id")
+
