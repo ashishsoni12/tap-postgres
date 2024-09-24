@@ -62,6 +62,7 @@ class PostgresStream(Stream):
         timefield=self.config.get("timefield")                                #input timefield name
 
         timefield_format=self.config.get("timefield_format")                   #input timefield format
+        time_zone=self.config.get("time_zone")                                 #input timezone
 
         start_date = self.get_starting_timestamp(context)
         LOGGER.info("==========start_date %s==========",start_date)
@@ -92,9 +93,9 @@ class PostgresStream(Stream):
         self.state_endTime = endTime
         self.state_startTime = startTime
         #covert startTime epoch to timefield formate
-        starttimeFormat=convert_epoch_to_format(startTime/1000, timefield_format)
+        starttimeFormat=convert_epoch_to_format(startTime/1000, timefield_format,time_zone)
         #covert startTime epoch to timefield formate
-        endtimeFormat=convert_epoch_to_format(endTime/1000, timefield_format)
+        endtimeFormat=convert_epoch_to_format(endTime/1000, timefield_format,time_zone)
         LOGGER.info("==========starttimeFormat %s==========",starttimeFormat)
         LOGGER.info("==========endtimeFormat %s==========",endtimeFormat)
         #take query from user
@@ -105,6 +106,7 @@ class PostgresStream(Stream):
 
         with self.engine.connect() as conn:
             result = conn.execute(text(query))
+            print(any(result))
             column_names = list(result.keys()) # Retrieve column names
             x={}
             for row in result:

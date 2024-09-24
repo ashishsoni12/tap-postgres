@@ -1,4 +1,5 @@
 from datetime import datetime
+import pytz
 
 # Function to convert custom format like HHmmSS into standard strftime format
 def convert_custom_format(custom_format):
@@ -21,15 +22,21 @@ def convert_custom_format(custom_format):
 
     return custom_format
 
-# Function to convert epoch to desired format
-def convert_epoch_to_format(epoch_time, custom_format):
+# Function to convert epoch to desired format with timezone handling
+def convert_epoch_to_format(epoch_time, custom_format, time_zone):
     try:
         # Convert custom format to strftime-compatible format
         desired_format = convert_custom_format(custom_format)
-        
-        # Convert epoch to formatted time
-        formatted_time = datetime.utcfromtimestamp(int(epoch_time)).strftime(desired_format)
+
+        # Convert epoch to datetime object in UTC
+        dt_utc = datetime.utcfromtimestamp(int(epoch_time))
+
+        # Set timezone to the desired one
+        tz = pytz.timezone(time_zone)
+        dt_localized = pytz.utc.localize(dt_utc).astimezone(tz)
+
+        # Convert datetime object to the formatted string in the given timezone
+        formatted_time = dt_localized.strftime(desired_format)
         return formatted_time
     except Exception as e:
         return f"Error: {str(e)}"
-
