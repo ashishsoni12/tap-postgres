@@ -21,13 +21,12 @@ plugins:
       database: "wmebservices"
       user: "watermelon"
       password: "watermelon123"
-        #      table_name: "public.test"
-      initial_start_time: 1727116200000
+      initial_start_time: 1727107200000
         #      endtimeU: 1726770600000
       query: "select * from public.test"
       timefield: "data_uploaded_time"
       timefield_format: "YYYY-MM-DDTHH:mm:SS"
-      time_zone: "Asia/Kolkata"
+      time_zone: "Asia/Calcutta"
 
 
   loaders:

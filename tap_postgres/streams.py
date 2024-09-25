@@ -30,7 +30,7 @@ class PostgresStream(Stream):
     
     def __init__(self, tap, table_name: Optional[str] = None):
         super().__init__(tap)
-        self.table_name = table_name or self.config.get("table_name")
+#        self.table_name = table_name or self.config.get("table_name")
         self.engine = create_postgres_engine(self.config)
         
     def get_starting_timestamp(self, context: Optional[dict]) -> Optional[datetime]:

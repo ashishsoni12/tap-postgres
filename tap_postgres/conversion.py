@@ -1,7 +1,7 @@
 from datetime import datetime
 import pytz
 
-# Function to convert custom format like HHmmSS into standard strftime format
+# Function to convert custom format like YYYYMMDDTHHMMSSZ into standard strftime format
 def convert_custom_format(custom_format):
     # Mapping custom tokens to Python strftime format tokens
     format_mapping = {
@@ -10,10 +10,11 @@ def convert_custom_format(custom_format):
         'MM': '%m',    # Month (2 digits)
         'DD': '%d',    # Day (2 digits)
         'HH': '%H',    # Hours (24-hour)
-        'hh': '%I',    # Hours (12-hour)
         'mm': '%M',    # Minutes
         'SS': '%S',    # Seconds
-        'AMPM': '%p',  # AM/PM
+        'Z': 'Z',      # Literal 'Z'
+        'T': 'T',      # Literal 'T'
+        # We will handle 's', 'ss', 'sss' manually
     }
 
     # Replace custom format tokens with strftime tokens
@@ -22,21 +23,47 @@ def convert_custom_format(custom_format):
 
     return custom_format
 
-# Function to convert epoch to desired format with timezone handling
-def convert_epoch_to_format(epoch_time, custom_format, time_zone):
+# Function to extract milliseconds in required format
+def format_milliseconds(epoch_time_ms, precision):
+    milliseconds = int(epoch_time_ms % 1000)  # Get the milliseconds part
+    if precision == 1:  # 's'
+        return f'{milliseconds // 100}'  # Get first digit of milliseconds
+    elif precision == 2:  # 'ss'
+        return f'{milliseconds // 10:02}'  # Get first two digits of milliseconds
+    elif precision == 3:  # 'sss'
+        return f'{milliseconds:03}'  # Full milliseconds (3 digits)
+    return ''
+
+# Function to convert epoch (in milliseconds) to desired format with timezone handling
+def convert_epoch_to_format(epoch_time_ms, custom_format, time_zone):
     try:
+        # Extract milliseconds from the epoch time
+        epoch_time = epoch_time_ms / 1000.0  # Convert milliseconds to seconds
+        
         # Convert custom format to strftime-compatible format
         desired_format = convert_custom_format(custom_format)
 
         # Convert epoch to datetime object in UTC
-        dt_utc = datetime.utcfromtimestamp(int(epoch_time))
+        dt_utc = datetime.utcfromtimestamp(epoch_time)
 
         # Set timezone to the desired one
         tz = pytz.timezone(time_zone)
         dt_localized = pytz.utc.localize(dt_utc).astimezone(tz)
 
-        # Convert datetime object to the formatted string in the given timezone
-        formatted_time = dt_localized.strftime(desired_format)
+        # Handle 's', 'ss', 'sss' manually since strftime doesn't support milliseconds
+        if 'sss' in custom_format:
+            formatted_time = dt_localized.strftime(desired_format)
+            formatted_time = formatted_time.replace('sss', format_milliseconds(epoch_time_ms, 3))
+        elif 'ss' in custom_format:
+            formatted_time = dt_localized.strftime(desired_format)
+            formatted_time = formatted_time.replace('ss', format_milliseconds(epoch_time_ms, 2))
+        elif 's' in custom_format:
+            formatted_time = dt_localized.strftime(desired_format)
+            formatted_time = formatted_time.replace('s', format_milliseconds(epoch_time_ms, 1))
+        else:
+            # No milliseconds to handle, format normally
+            formatted_time = dt_localized.strftime(desired_format)
+
         return formatted_time
     except Exception as e:
         return f"Error: {str(e)}"
