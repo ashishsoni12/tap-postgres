@@ -128,9 +128,9 @@ class PostgresStream(Stream):
         LOGGER.info("==========endtimeEpoch %s==========",endTime)
 
         #covert startTime epoch to timefield format
-        starttimeFormat=convert_epoch_to_format(startTime/1000, timefield_format,time_zone)
+        starttimeFormat=convert_epoch_to_format(startTime, timefield_format,time_zone)
         #covert endTime epoch to timefield format
-        endtimeFormat=convert_epoch_to_format(endTime/1000, timefield_format,time_zone)
+        endtimeFormat=convert_epoch_to_format(endTime, timefield_format,time_zone)
         LOGGER.info("==========starttimeFormat %s==========",starttimeFormat)
         LOGGER.info("==========endtimeFormat %s==========",endtimeFormat)
         query_prefix=self.config.get("query")

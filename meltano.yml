@@ -16,7 +16,7 @@ plugins:
     - about
     - stream-maps
     config:
-      host: "ec2-3-0-184-69.ap-southeast-1.compute.amazonaws.com"
+      host: "ec2-54-255-38-151.ap-southeast-1.compute.amazonaws.com"
       port: 30003
       database: "wmebservices"
       user: "watermelon"
